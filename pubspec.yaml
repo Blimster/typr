@@ -1,0 +1,13 @@
+name: typr
+description: A tiny programming language.
+version: 0.1.0
+repository: https://github.com/my_org/typr
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  args: ^2.7.0
+
+dev_dependencies:
+  lints: ^6.0.0
