@@ -1,6 +1,7 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
-import 'package:typr/src/commands/parse/parse_command.dart';
+import 'package:typr/src/commands/eval/eval_command.dart';
+import 'package:typr/src/commands/run/run_command.dart';
 import 'package:typr/src/commands/scan/scan_command.dart';
 
 CommandRunner buildCommandRunner() {
@@ -9,7 +10,8 @@ CommandRunner buildCommandRunner() {
     'A command-line utility for Typr development.',
   );
   runner.addCommand(ScanCommand());
-  runner.addCommand(ParseCommand());
+  runner.addCommand(EvalCommand());
+  runner.addCommand(RunCommand());
   return runner;
 }
 
@@ -19,6 +21,12 @@ void printUsage(ArgParser argParser) {
 }
 
 void typr(List<String> args) async {
-  final runner = buildCommandRunner();
-  await runner.run(args);
+  try {
+    final runner = buildCommandRunner();
+    await runner.run(args);
+  } on UsageException catch (e) {
+    print(e.message);
+    print('');
+    print('Usage: ${e.usage}');
+  }
 }

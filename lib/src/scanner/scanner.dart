@@ -1,5 +1,4 @@
 import 'package:typr/src/model/token.dart';
-import 'package:typr/src/model/token_type.dart';
 
 final _alphaChars = {
   'a',
@@ -57,6 +56,7 @@ final _alphaChars = {
 };
 
 final _keywords = {
+  'print': TokenType.print,
   'true': TokenType.trueKeyword,
   'false': TokenType.falseKeyword,
 };
@@ -74,51 +74,56 @@ class Scanner(final String _source) {
       _scanToken();
     }
 
-    _tokens.add(Token(.eof, "", null, _line, _column));
+    _tokens.add(Token(.eof, "", null, TokenLocation(_line, _column)));
 
     return _tokens;
   }
 
   void _scanToken() {
-    final char = _advance();
+    final currentLocation = _currentLocation();
 
+    final char = _advance();
     switch (char) {
       case '(':
-        _tokens.add(Token(.leftParenthesis, '(', null, _line, _column));
+        _tokens.add(Token(.leftParenthesis, '(', null, currentLocation));
       case ')':
-        _tokens.add(Token(.rightParenthesis, ')', null, _line, _column));
+        _tokens.add(Token(.rightParenthesis, ')', null, currentLocation));
       case '+':
-        _tokens.add(Token(.plus, '+', null, _line, _column));
+        _tokens.add(Token(.plus, '+', null, currentLocation));
       case '-':
-        _tokens.add(Token(.minus, '-', null, _line, _column));
+        _tokens.add(Token(.minus, '-', null, currentLocation));
       case '*':
-        _tokens.add(Token(.star, '*', null, _line, _column));
+        _tokens.add(Token(.star, '*', null, currentLocation));
       case '/':
-        _tokens.add(Token(.slash, '/', null, _line, _column));
+        _tokens.add(Token(.slash, '/', null, currentLocation));
+      case ';':
+        _tokens.add(Token(.semicolon, ';', null, currentLocation));
       case '=':
         if (_match('=')) {
-          _tokens.add(Token(.equal, '==', null, _line, _column));
+          _tokens.add(Token(.equal, '==', null, currentLocation));
         } else {
-          throw StateError('Unexpected character: $char at line $_line, column $_column');
+          throw StateError(
+            'Unexpected character: $char at line ${currentLocation.line}, column ${currentLocation.column}',
+          );
         }
       case '!':
         if (_match('=')) {
-          _tokens.add(Token(.notEqual, '!=', null, _line, _column));
+          _tokens.add(Token(.notEqual, '!=', null, currentLocation));
         } else {
-          _tokens.add(Token(.bang, '!', null, _line, _column));
+          _tokens.add(Token(.bang, '!', null, currentLocation));
         }
       case '<':
         if (_match('=')) {
-          _tokens.add(Token(.lessEqual, '<=', null, _line, _column));
+          _tokens.add(Token(.lessEqual, '<=', null, currentLocation));
         } else {
-          _tokens.add(Token(.less, '<', null, _line, _column));
+          _tokens.add(Token(.less, '<', null, currentLocation));
         }
         break;
       case '>':
         if (_match('=')) {
-          _tokens.add(Token(.greaterEqual, '>=', null, _line, _column));
+          _tokens.add(Token(.greaterEqual, '>=', null, currentLocation));
         } else {
-          _tokens.add(Token(.greater, '>', null, _line, _column));
+          _tokens.add(Token(.greater, '>', null, currentLocation));
         }
         break;
       case '\n':
@@ -187,6 +192,10 @@ class Scanner(final String _source) {
     return _source[_current + 1];
   }
 
+  TokenLocation _currentLocation() {
+    return TokenLocation(_line, _column);
+  }
+
   bool _isDigit(String char) {
     return int.tryParse(char) != null;
   }
@@ -200,6 +209,8 @@ class Scanner(final String _source) {
   }
 
   void _string(String quoteType) {
+    final currentLocation = _currentLocation();
+
     while (_peek() != quoteType && !_isAtEnd()) {
       if (_peek() == '\n') {
         _line++;
@@ -215,10 +226,12 @@ class Scanner(final String _source) {
     _advance();
 
     String value = _source.substring(_start + 1, _current - 1);
-    _tokens.add(Token(.string, value, value, _line, _column));
+    _tokens.add(Token(.string, value, value, currentLocation));
   }
 
   void _number() {
+    final currentLocation = _currentLocation();
+
     while (_isDigit(_peek())) {
       _advance();
     }
@@ -233,19 +246,21 @@ class Scanner(final String _source) {
 
     final literal = _source.substring(_start, _current);
     if (literal.contains('.')) {
-      _tokens.add(Token(.double, literal, double.parse(literal), _line, _column));
+      _tokens.add(Token(.double, literal, double.parse(literal), currentLocation));
     } else {
-      _tokens.add(Token(.integer, literal, int.parse(literal), _line, _column));
+      _tokens.add(Token(.integer, literal, int.parse(literal), currentLocation));
     }
   }
 
   void _identifierOrKeyword() {
+    final currentLocation = _currentLocation();
+
     while (_isAlphaNumeric(_peek())) {
       _advance();
     }
 
     final text = _source.substring(_start, _current);
     final tokenType = _keywords[text] ?? .identifier;
-    _tokens.add(Token(tokenType, text, null, _line, _column));
+    _tokens.add(Token(tokenType, text, null, currentLocation));
   }
 }

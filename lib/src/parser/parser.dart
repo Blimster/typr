@@ -1,12 +1,36 @@
 import 'package:typr/src/model/expression.dart';
+import 'package:typr/src/model/statement.dart';
 import 'package:typr/src/model/token.dart';
-import 'package:typr/src/model/token_type.dart';
 
 class Parser(final List<Token> _tokens) {
   int _current = 0;
 
-  Expression parse() {
-    return _expression();
+  List<Statement> parse() {
+    final List<Statement> statements = [];
+    while (!_isAtEnd()) {
+      statements.add(_statement());
+    }
+
+    return statements;
+  }
+
+  Statement _statement() {
+    if (_matchTokenType([.print])) {
+      return _printStatement();
+    }
+    return _expressionStatement();
+  }
+
+  Statement _printStatement() {
+    final value = _expression();
+    _consume(.semicolon, "Expect ';' after value.");
+    return PrintStatement(value);
+  }
+
+  Statement _expressionStatement() {
+    final expression = _expression();
+    _consume(.semicolon, "Expect ';' after expression.");
+    return ExpressionStatement(expression);
   }
 
   Expression _expression() {
