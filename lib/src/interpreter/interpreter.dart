@@ -1,7 +1,10 @@
+import 'package:typr/src/interpreter/environment.dart';
 import 'package:typr/src/model/expression.dart';
 import 'package:typr/src/model/statement.dart';
 
 class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
+  final Environment _environment = Environment();
+
   void interpret(List<Statement> statements) {
     for (final statement in statements) {
       _execute(statement);
@@ -13,12 +16,12 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
   }
 
   @override
-  Object visitLiteral(Literal literal) {
+  Object visitLiteralExpression(LiteralExpression literal) {
     return literal.value;
   }
 
   @override
-  Object visitUnary(Unary unary) {
+  Object visitUnaryExpression(UnaryExpression unary) {
     final right = _evaluate(unary.right);
 
     if (right is bool) {
@@ -45,7 +48,7 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
   }
 
   @override
-  Object visitBinary(Binary binary) {
+  Object visitBinaryExpression(BinaryExpression binary) {
     final left = _evaluate(binary.left);
     final right = _evaluate(binary.right);
 
@@ -93,8 +96,13 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
   }
 
   @override
-  Object visitGrouping(Grouping grouping) {
+  Object visitGroupingExpression(GroupingExpression grouping) {
     return _evaluate(grouping.expression);
+  }
+
+  @override
+  Object visitVariableExpression(VariableExpression variable) {
+    return _environment.get(variable.name.lexeme);
   }
 
   @override
@@ -106,6 +114,18 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
   void visitPrintStatement(PrintStatement statement) {
     final value = _evaluate(statement.expression);
     print(value);
+  }
+
+  @override
+  void visitValDeclarationStatement(ValDeclarationStatement statement) {
+    final value = _evaluate(statement.initializer);
+    _environment.define(statement.name, value);
+  }
+
+  @override
+  void visitVarDeclarationStatement(VarDeclarationStatement statement) {
+    final value = _evaluate(statement.initializer);
+    _environment.define(statement.name, value);
   }
 
   Object _evaluate(Expression expression) {

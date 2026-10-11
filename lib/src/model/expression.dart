@@ -1,40 +1,48 @@
 import 'package:typr/src/model/token.dart';
 
 abstract interface class ExpressionVisitor<R> {
-  R visitUnary(Unary unary);
-  R visitBinary(Binary binary);
-  R visitGrouping(Grouping grouping);
-  R visitLiteral(Literal literal);
+  R visitUnaryExpression(UnaryExpression unary);
+  R visitBinaryExpression(BinaryExpression binary);
+  R visitGroupingExpression(GroupingExpression grouping);
+  R visitLiteralExpression(LiteralExpression literal);
+  R visitVariableExpression(VariableExpression variable);
 }
 
 sealed class Expression {
   R accept<R>(ExpressionVisitor<R> visitor);
 }
 
-class Unary(final Token operator, final Expression right) implements Expression {
+class UnaryExpression(final Token operator, final Expression right) implements Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
-    return visitor.visitUnary(this);
+    return visitor.visitUnaryExpression(this);
   }
 }
 
-class Binary(final Expression left, final Token operator, final Expression right) implements Expression {
+class BinaryExpression(final Expression left, final Token operator, final Expression right) implements Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
-    return visitor.visitBinary(this);
+    return visitor.visitBinaryExpression(this);
   }
 }
 
-class Grouping(final Expression expression) implements Expression {
+class GroupingExpression(final Expression expression) implements Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
-    return visitor.visitGrouping(this);
+    return visitor.visitGroupingExpression(this);
   }
 }
 
-class Literal(final Object value) implements Expression {
+class LiteralExpression(final Object value) implements Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
-    return visitor.visitLiteral(this);
+    return visitor.visitLiteralExpression(this);
+  }
+}
+
+class VariableExpression(final Token name) implements Expression {
+  @override
+  R accept<R>(ExpressionVisitor<R> visitor) {
+    return visitor.visitVariableExpression(this);
   }
 }

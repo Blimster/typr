@@ -56,9 +56,11 @@ final _alphaChars = {
 };
 
 final _keywords = {
-  'print': TokenType.print,
+  'print': TokenType.printKeyword,
   'true': TokenType.trueKeyword,
   'false': TokenType.falseKeyword,
+  'var': TokenType.varKeyword,
+  'val': TokenType.valKeyword,
 };
 
 class Scanner(final String _source) {
@@ -102,9 +104,7 @@ class Scanner(final String _source) {
         if (_match('=')) {
           _tokens.add(Token(.equal, '==', null, currentLocation));
         } else {
-          throw StateError(
-            'Unexpected character: $char at line ${currentLocation.line}, column ${currentLocation.column}',
-          );
+          _tokens.add(Token(.assign, '=', null, currentLocation));
         }
       case '!':
         if (_match('=')) {

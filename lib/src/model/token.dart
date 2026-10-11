@@ -10,6 +10,7 @@ enum TokenType {
   greater,
   bang,
   semicolon,
+  assign,
 
   // two char tokens
   equal,
@@ -26,7 +27,9 @@ enum TokenType {
   // keywords
   trueKeyword,
   falseKeyword,
-  print,
+  varKeyword,
+  valKeyword,
+  printKeyword,
 
   // end of file
   eof,
