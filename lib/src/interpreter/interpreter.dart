@@ -128,6 +128,12 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
     _environment.define(statement.name, value);
   }
 
+  @override
+  void visitAssignmentStatement(AssignmentStatement statement) {
+    final value = _evaluate(statement.value);
+    _environment.assign(statement.name, value);
+  }
+
   Object _evaluate(Expression expression) {
     return expression.accept(this);
   }

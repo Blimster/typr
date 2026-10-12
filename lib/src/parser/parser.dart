@@ -45,6 +45,9 @@ class Parser(final List<Token> _tokens) {
     if (_matchTokenType([.printKeyword])) {
       return _printStatement();
     }
+    if (_matchTokenType([.identifier])) {
+      return _assignmentStatement();
+    }
 
     return _expressionStatement();
   }
@@ -53,6 +56,14 @@ class Parser(final List<Token> _tokens) {
     final value = _expression();
     _consume(.semicolon, "Expect ';' after value.");
     return PrintStatement(value);
+  }
+
+  Statement _assignmentStatement() {
+    final name = _previous();
+    _consume(.assign, "Expect '=' after variable name.");
+    final value = _expression();
+    _consume(.semicolon, "Expect ';' after assignment.");
+    return AssignmentStatement(name.lexeme, value);
   }
 
   Statement _expressionStatement() {

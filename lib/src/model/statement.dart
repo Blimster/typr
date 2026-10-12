@@ -5,6 +5,7 @@ abstract interface class StatementVisitor<R> {
   R visitExpressionStatement(ExpressionStatement statement);
   R visitVarDeclarationStatement(VarDeclarationStatement statement);
   R visitValDeclarationStatement(ValDeclarationStatement statement);
+  R visitAssignmentStatement(AssignmentStatement statement);
 }
 
 sealed class Statement {
@@ -15,6 +16,13 @@ class PrintStatement(final Expression expression) extends Statement {
   @override
   R accept<R>(StatementVisitor<R> visitor) {
     return visitor.visitPrintStatement(this);
+  }
+}
+
+class AssignmentStatement(final String name, final Expression value) extends Statement {
+  @override
+  R accept<R>(StatementVisitor<R> visitor) {
+    return visitor.visitAssignmentStatement(this);
   }
 }
 

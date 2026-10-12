@@ -8,6 +8,13 @@ class Environment {
     _values[name] = value;
   }
 
+  void assign(String name, Object value) {
+    if (!_values.containsKey(name)) {
+      throw Exception('Variable "$name" is not defined.');
+    }
+    _values[name] = value;
+  }
+
   Object get(String name) {
     if (!_values.containsKey(name)) {
       throw Exception('Variable "$name" is not defined.');
