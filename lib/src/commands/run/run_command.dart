@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/interpreter/interpreter.dart';
 import 'package:typr/src/parser/parser.dart';
 import 'package:typr/src/scanner/scanner.dart';
@@ -23,8 +24,14 @@ class RunCommand extends Command {
     final typrFile = File(typrFileArg.first);
     final source = typrFile.readAsStringSync();
 
-    final scanner = Scanner(source);
+    final errorHandler = ConsoleErrorHandler();
+
+    final scanner = Scanner(source, errorHandler);
     final tokens = scanner.scanTokens();
+
+    if (errorHandler.hadError) {
+      return;
+    }
 
     final parser = Parser(tokens);
     final statements = parser.parse();

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/interpreter/interpreter.dart';
 import 'package:typr/src/model/statement.dart';
 import 'package:typr/src/parser/parser.dart';
@@ -18,8 +19,13 @@ class EvalCommand extends Command {
       stdout.write('Enter a single expression to evaluate: ');
       final source = stdin.readLineSync();
       if (source != null && source.isNotEmpty) {
-        final scanner = Scanner(source);
+        final errorHandler = ConsoleErrorHandler();
+        final scanner = Scanner(source, errorHandler);
         final tokens = scanner.scanTokens();
+
+        if (errorHandler.hadError) {
+          continue;
+        }
 
         final parser = Parser(tokens);
         final statements = parser.parse();

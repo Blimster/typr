@@ -1,3 +1,4 @@
+import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/model/token.dart';
 
 final _alphaChars = {
@@ -63,7 +64,7 @@ final _keywords = {
   'val': TokenType.valKeyword,
 };
 
-class Scanner(final String _source) {
+class Scanner(final String _source, final ErrorHandler _errorHandler) {
   final List<Token> _tokens = [];
   int _start = 0;
   int _current = 0;
@@ -142,7 +143,7 @@ class Scanner(final String _source) {
         } else if (_isAlpha(char)) {
           _identifierOrKeyword();
         } else {
-          throw StateError('Unexpected character: $char at line $_line, column ${_column - 1}');
+          _errorHandler.reportError('Unexpected character: $char', currentLocation);
         }
     }
   }
@@ -220,7 +221,8 @@ class Scanner(final String _source) {
     }
 
     if (_isAtEnd()) {
-      throw StateError('Unterminated string at line $_line, column $_column');
+      _errorHandler.reportError('Unterminated string', currentLocation);
+      return;
     }
 
     _advance();
