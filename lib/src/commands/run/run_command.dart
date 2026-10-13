@@ -15,16 +15,30 @@ class RunCommand extends Command {
   @override
   String get usage => 'typr run <typr-file>';
 
+  RunCommand() {
+    argParser.addFlag(
+      'time',
+      abbr: 't',
+      negatable: false,
+      help: 'Displays the execution time of the Typr application.',
+    );
+  }
+
   @override
   void run() {
+    final timeArg = argResults?['time'] ?? false;
     final typrFileArg = argResults?.rest ?? [];
+
     if (typrFileArg.isEmpty) {
       throw UsageException('No Typr file specified.', usage);
     }
+
     final typrFile = File(typrFileArg.first);
     final source = typrFile.readAsStringSync();
 
     final errorHandler = ConsoleErrorHandler();
+
+    final sw = Stopwatch()..start();
 
     final scanner = Scanner(source, errorHandler);
     final tokens = scanner.scanTokens();
@@ -42,5 +56,11 @@ class RunCommand extends Command {
 
     final interpreter = Interpreter();
     interpreter.interpret(statements);
+
+    sw.stop();
+
+    if (timeArg) {
+      print('Execution time: ${sw.elapsedMicroseconds / 1000.0} ms');
+    }
   }
 }
