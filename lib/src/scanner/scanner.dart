@@ -128,20 +128,19 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
         }
         break;
       case '\n':
-        _line++;
-        _column = 1;
+        break;
       case ' ':
       case '\t':
       case '\r':
         break;
       case '"':
       case "'":
-        _string(char);
+        _string(char, currentLocation);
       default:
         if (_isDigit(char)) {
-          _number();
+          _number(currentLocation);
         } else if (_isAlpha(char)) {
-          _identifierOrKeyword();
+          _identifierOrKeyword(currentLocation);
         } else {
           _errorHandler.reportError('Unexpected character: $char', currentLocation);
         }
@@ -175,6 +174,7 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
     }
 
     _current++;
+    _column++;
 
     return true;
   }
@@ -209,14 +209,8 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
     return _isAlpha(char) || _isDigit(char);
   }
 
-  void _string(String quoteType) {
-    final currentLocation = _currentLocation();
-
+  void _string(String quoteType, TokenLocation currentLocation) {
     while (_peek() != quoteType && !_isAtEnd()) {
-      if (_peek() == '\n') {
-        _line++;
-        _column = 1;
-      }
       _advance();
     }
 
@@ -231,9 +225,7 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
     _tokens.add(Token(.string, value, value, currentLocation));
   }
 
-  void _number() {
-    final currentLocation = _currentLocation();
-
+  void _number(TokenLocation currentLocation) {
     while (_isDigit(_peek())) {
       _advance();
     }
@@ -254,9 +246,7 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
     }
   }
 
-  void _identifierOrKeyword() {
-    final currentLocation = _currentLocation();
-
+  void _identifierOrKeyword(TokenLocation currentLocation) {
     while (_isAlphaNumeric(_peek())) {
       _advance();
     }
