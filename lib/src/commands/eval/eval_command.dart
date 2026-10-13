@@ -27,8 +27,12 @@ class EvalCommand extends Command {
           continue;
         }
 
-        final parser = Parser(tokens);
+        final parser = Parser(tokens, errorHandler);
         final statements = parser.parse();
+
+        if (errorHandler.hadError) {
+          continue;
+        }
 
         if (statements.isNotEmpty) {
           final firstStatement = statements.first;

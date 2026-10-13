@@ -1,28 +1,41 @@
+import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/model/expression.dart';
 import 'package:typr/src/model/statement.dart';
 import 'package:typr/src/model/token.dart';
 
-class Parser(final List<Token> _tokens) {
+class ParserError extends StateError {
+  ParserError(super.message);
+}
+
+class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
   int _current = 0;
 
   List<Statement> parse() {
     final List<Statement> statements = [];
     while (!_isAtEnd()) {
-      statements.add(_declaration());
+      final declaration = _declaration();
+      if (declaration != null) {
+        statements.add(declaration);
+      }
     }
 
     return statements;
   }
 
-  Statement _declaration() {
-    if (_matchTokenType([.varKeyword])) {
-      return _varDeclaration();
-    }
-    if (_matchTokenType([.valKeyword])) {
-      return _valDeclaration();
-    }
+  Statement? _declaration() {
+    try {
+      if (_matchTokenType([.varKeyword])) {
+        return _varDeclaration();
+      }
+      if (_matchTokenType([.valKeyword])) {
+        return _valDeclaration();
+      }
 
-    return _statement();
+      return _statement();
+    } on ParserError {
+      _synchronize();
+      return null;
+    }
   }
 
   Statement _varDeclaration() {
@@ -152,7 +165,7 @@ class Parser(final List<Token> _tokens) {
       return GroupingExpression(expr);
     }
 
-    throw StateError("Expect expression.");
+    throw _error("Expect expression.", _peek());
   }
 
   bool _matchTokenType(List<TokenType> types) {
@@ -170,7 +183,7 @@ class Parser(final List<Token> _tokens) {
       return _advance();
     }
 
-    throw StateError(message);
+    throw _error(message, _peek());
   }
 
   bool _checkTokenType(TokenType type) {
@@ -193,5 +206,29 @@ class Parser(final List<Token> _tokens) {
 
   Token _previous() {
     return _tokens[_current - 1];
+  }
+
+  ParserError _error(String message, Token token) {
+    _errorHandler.reportErrorWithToken(message, token);
+    return ParserError(message);
+  }
+
+  void _synchronize() {
+    _advance();
+
+    while (!_isAtEnd()) {
+      if (_previous().type == .semicolon) {
+        return;
+      }
+
+      switch (_peek().type) {
+        case .varKeyword:
+        case .valKeyword:
+        case .printKeyword:
+          return;
+        case _:
+          _advance();
+      }
+    }
   }
 }

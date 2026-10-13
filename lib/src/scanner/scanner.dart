@@ -142,7 +142,7 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
         } else if (_isAlpha(char)) {
           _identifierOrKeyword(currentLocation);
         } else {
-          _errorHandler.reportError('Unexpected character: $char', currentLocation);
+          _errorHandler.reportErrorWithLocation('Unexpected character: $char', currentLocation);
         }
     }
   }
@@ -215,7 +215,7 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
     }
 
     if (_isAtEnd()) {
-      _errorHandler.reportError('Unterminated string', currentLocation);
+      _errorHandler.reportErrorWithLocation('Unterminated string', currentLocation);
       return;
     }
 

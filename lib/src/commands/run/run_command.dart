@@ -33,8 +33,12 @@ class RunCommand extends Command {
       return;
     }
 
-    final parser = Parser(tokens);
+    final parser = Parser(tokens, errorHandler);
     final statements = parser.parse();
+
+    if (errorHandler.hadError) {
+      return;
+    }
 
     final interpreter = Interpreter();
     interpreter.interpret(statements);
