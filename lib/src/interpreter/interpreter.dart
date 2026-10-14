@@ -7,7 +7,7 @@ import 'package:typr/src/model/token.dart';
 class RuntimeError(final Token token, final String message) implements Exception;
 
 class Interpreter(final ErrorHandler _errorHandler) implements ExpressionVisitor<Object>, StatementVisitor<void> {
-  final Environment _environment = Environment();
+  final InterpreterEnvironment _environment = InterpreterEnvironment();
 
   void interpret(List<Statement> statements) {
     try {

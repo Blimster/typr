@@ -2,10 +2,13 @@ import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/model/expression.dart';
 import 'package:typr/src/model/statement.dart';
 import 'package:typr/src/model/token.dart';
+import 'package:typr/src/model/type.dart';
+import 'package:typr/src/parser/environment.dart';
 
 class ParserError(final String message) implements Exception;
 
 class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
+  final ParserEnvironment _environment = ParserEnvironment();
   int _current = 0;
 
   List<Statement> parse() {
@@ -41,6 +44,7 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     _consume(.assign, "Expect '=' after variable name.");
     final initializer = _expression();
     _consume(.semicolon, "Expect ';' after variable declaration.");
+    _environment.declare(name.lexeme, initializer.type, true);
     return VarDeclarationStatement(name.lexeme, initializer);
   }
 
@@ -49,6 +53,7 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     _consume(.assign, "Expect '=' after variable name.");
     final initializer = _expression();
     _consume(.semicolon, "Expect ';' after variable declaration.");
+    _environment.declare(name.lexeme, initializer.type, false);
     return ValDeclarationStatement(name.lexeme, initializer);
   }
 
@@ -74,6 +79,22 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     _consume(.assign, "Expect '=' after variable name.");
     final value = _expression();
     _consume(.semicolon, "Expect ';' after assignment.");
+
+    if (_environment.isMutable(name.lexeme) == false) {
+      throw _error('Assignment to inmutable variable is not allowed.', name);
+    }
+
+    final type = _environment.getType(name.lexeme);
+    if (type == null) {
+      throw _error('Variable "${name.lexeme}" is not declared.', name);
+    }
+    if (!type.isAssignableWith(value.type)) {
+      throw _error(
+        'Expression of type "${value.type.name}" is not assignable to variable of type "${type.name}".',
+        name,
+      );
+    }
+
     return AssignmentStatement(name.lexeme, value);
   }
 
@@ -93,7 +114,8 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     while (_matchTokenType([.equal, .notEqual])) {
       final operator = _previous();
       final right = _comparison();
-      expr = BinaryExpression(expr, operator, right);
+      final type = _typeOfBinary(expr, operator, right);
+      expr = BinaryExpression(type, expr, operator, right);
     }
 
     return expr;
@@ -105,7 +127,8 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     while (_matchTokenType([.greater, .greaterEqual, .less, .lessEqual])) {
       final operator = _previous();
       final right = _term();
-      expr = BinaryExpression(expr, operator, right);
+      final type = _typeOfBinary(expr, operator, right);
+      expr = BinaryExpression(type, expr, operator, right);
     }
 
     return expr;
@@ -117,7 +140,8 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     while (_matchTokenType([.minus, .plus])) {
       final operator = _previous();
       final right = _factor();
-      expr = BinaryExpression(expr, operator, right);
+      final type = _typeOfBinary(expr, operator, right);
+      expr = BinaryExpression(type, expr, operator, right);
     }
 
     return expr;
@@ -129,7 +153,8 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
     while (_matchTokenType([.slash, .star])) {
       final operator = _previous();
       final right = _unary();
-      expr = BinaryExpression(expr, operator, right);
+      final type = _typeOfBinary(expr, operator, right);
+      expr = BinaryExpression(type, expr, operator, right);
     }
 
     return expr;
@@ -146,15 +171,20 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
   }
 
   Expression _primary() {
-    if (_matchTokenType([.falseKeyword])) return LiteralExpression(false);
-    if (_matchTokenType([.trueKeyword])) return LiteralExpression(true);
+    if (_matchTokenType([.falseKeyword])) return LiteralExpression(boolType, false);
+    if (_matchTokenType([.trueKeyword])) return LiteralExpression(boolType, true);
 
-    if (_matchTokenType([.integer, .double, .string])) {
-      return LiteralExpression(_previous().literal!);
-    }
+    if (_matchTokenType([.integer])) return LiteralExpression(intType, _previous().literal!);
+    if (_matchTokenType([.double])) return LiteralExpression(doubleType, _previous().literal!);
+    if (_matchTokenType([.string])) return LiteralExpression(stringType, _previous().literal!);
 
     if (_matchTokenType([.identifier])) {
-      return VariableExpression(_previous());
+      final nameToken = _previous();
+      final type = _environment.getType(nameToken.lexeme);
+      if (type == null) {
+        throw _error('Variable with name "${nameToken.lexeme}" is not declared.', nameToken);
+      }
+      return VariableExpression(type, nameToken);
     }
 
     if (_matchTokenType([.leftParenthesis])) {
@@ -204,6 +234,36 @@ class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
 
   Token _previous() {
     return _tokens[_current - 1];
+  }
+
+  BaseType _typeOfBinary(Expression left, Token operator, Expression right) {
+    if ([
+      TokenType.equal,
+      TokenType.notEqual,
+      TokenType.less,
+      TokenType.lessEqual,
+      TokenType.greater,
+      TokenType.greaterEqual,
+    ].contains(operator.type)) {
+      return boolType;
+    }
+
+    if ([
+          TokenType.plus,
+          TokenType.minus,
+          TokenType.star,
+          TokenType.slash,
+        ].contains(operator.type) &&
+        left.type.isType(numType) &&
+        right.type.isType(numType)) {
+      if (left.type == doubleType || right.type == doubleType) {
+        return doubleType;
+      } else {
+        return intType;
+      }
+    }
+
+    throw _error('Cannot determine type of binary operator.', operator);
   }
 
   ParserError _error(String message, Token token) {

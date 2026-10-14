@@ -1,6 +1,8 @@
 print 1 + 2;
+print 1 + 2 == 3;
 print !false;
-print 'Hello World';
+print 'Hello';
+print "World";
 
 var i = 10 * 2;
 print i;

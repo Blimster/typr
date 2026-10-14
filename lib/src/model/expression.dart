@@ -1,4 +1,5 @@
 import 'package:typr/src/model/token.dart';
+import 'package:typr/src/model/type.dart';
 
 abstract interface class ExpressionVisitor<R> {
   R visitUnaryExpression(UnaryExpression unary);
@@ -8,7 +9,7 @@ abstract interface class ExpressionVisitor<R> {
   R visitVariableExpression(VariableExpression variable);
 }
 
-sealed class Expression {
+sealed class Expression(final BaseType type) {
   R accept<R>(ExpressionVisitor<R> visitor);
 }
 
@@ -17,9 +18,13 @@ class UnaryExpression(final Token operator, final Expression right) implements E
   R accept<R>(ExpressionVisitor<R> visitor) {
     return visitor.visitUnaryExpression(this);
   }
+
+  @override
+  BaseType get type => right.type;
 }
 
-class BinaryExpression(final Expression left, final Token operator, final Expression right) implements Expression {
+class BinaryExpression(super.type, final Expression left, final Token operator, final Expression right)
+    extends Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
     return visitor.visitBinaryExpression(this);
@@ -31,16 +36,19 @@ class GroupingExpression(final Expression expression) implements Expression {
   R accept<R>(ExpressionVisitor<R> visitor) {
     return visitor.visitGroupingExpression(this);
   }
+
+  @override
+  BaseType get type => expression.type;
 }
 
-class LiteralExpression(final Object value) implements Expression {
+class LiteralExpression(super.type, final Object value) extends Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
     return visitor.visitLiteralExpression(this);
   }
 }
 
-class VariableExpression(final Token name) implements Expression {
+class VariableExpression(super.type, final Token name) extends Expression {
   @override
   R accept<R>(ExpressionVisitor<R> visitor) {
     return visitor.visitVariableExpression(this);

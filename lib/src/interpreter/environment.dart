@@ -1,4 +1,4 @@
-class Environment {
+class InterpreterEnvironment {
   final Map<String, Object> _values = {};
 
   void define(String name, Object value) {
