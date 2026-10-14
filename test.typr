@@ -1,11 +1,11 @@
-print 1 + 2;
-print 1 + 2 == 3;
-print !false;
-print 'Hello';
-print "World";
+print 1 + 2; // simple addition
+print 1 + 2 == 3; // equals
+print !false; // noz
+print 'Hello'; // string with quotes
+print "World"; // string with double quotes
 
-var i = 10 * 2;
+var i = 10 * 2; // variable declaration
 print i;
 
-i = i * 2;
+i = i * 2; // variable assignment
 print i;

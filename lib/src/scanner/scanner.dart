@@ -97,10 +97,16 @@ class Scanner(final String _source, final ErrorHandler _errorHandler) {
         _tokens.add(Token(.minus, '-', null, currentLocation));
       case '*':
         _tokens.add(Token(.star, '*', null, currentLocation));
-      case '/':
-        _tokens.add(Token(.slash, '/', null, currentLocation));
       case ';':
         _tokens.add(Token(.semicolon, ';', null, currentLocation));
+      case '/':
+        if (_match('/')) {
+          while (_peek() != '\n' && !_isAtEnd()) {
+            _advance();
+          }
+        } else {
+          _tokens.add(Token(.slash, '/', null, currentLocation));
+        }
       case '=':
         if (_match('=')) {
           _tokens.add(Token(.equal, '==', null, currentLocation));
