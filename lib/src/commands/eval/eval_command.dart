@@ -38,8 +38,13 @@ class EvalCommand extends Command {
           final firstStatement = statements.first;
           if (firstStatement is ExpressionStatement) {
             final expression = firstStatement.expression;
-            final interpreter = Interpreter();
+            final interpreter = Interpreter(errorHandler);
             final result = expression.accept(interpreter);
+
+            if (errorHandler.hadError) {
+              continue;
+            }
+
             print('Expression result: $result');
           } else {
             print('Error: Input is not a single expression.');

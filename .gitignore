@@ -1,3 +1,8 @@
-# https://dart.dev/tools/private-files
-# Created by `dart pub`
+# macOS
+.DS_Store
+
+# Dart
 .dart_tool/
+
+# Project
+typr

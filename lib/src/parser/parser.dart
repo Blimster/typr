@@ -3,9 +3,7 @@ import 'package:typr/src/model/expression.dart';
 import 'package:typr/src/model/statement.dart';
 import 'package:typr/src/model/token.dart';
 
-class ParserError extends StateError {
-  ParserError(super.message);
-}
+class ParserError(final String message) implements Exception;
 
 class Parser(final List<Token> _tokens, final ErrorHandler _errorHandler) {
   int _current = 0;

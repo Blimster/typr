@@ -1,13 +1,21 @@
+import 'package:typr/src/error_handling/error_handling.dart';
 import 'package:typr/src/interpreter/environment.dart';
 import 'package:typr/src/model/expression.dart';
 import 'package:typr/src/model/statement.dart';
+import 'package:typr/src/model/token.dart';
 
-class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
+class RuntimeError(final Token token, final String message) implements Exception;
+
+class Interpreter(final ErrorHandler _errorHandler) implements ExpressionVisitor<Object>, StatementVisitor<void> {
   final Environment _environment = Environment();
 
   void interpret(List<Statement> statements) {
-    for (final statement in statements) {
-      _execute(statement);
+    try {
+      for (final statement in statements) {
+        _execute(statement);
+      }
+    } on RuntimeError catch (e) {
+      _errorHandler.reportErrorWithToken(e.message, e.token);
     }
   }
 
@@ -29,7 +37,8 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
         case .bang:
           return !right;
         default:
-          throw Exception(
+          throw RuntimeError(
+            unary.operator,
             'Unsupported operator for type: type=Bool, operator=${unary.operator.lexeme}',
           );
       }
@@ -38,7 +47,8 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
         case .minus:
           return -right;
         default:
-          throw Exception(
+          throw RuntimeError(
+            unary.operator,
             'Unsupported operator for type: type=${right is int ? 'Int' : 'Double'}, operator=${unary.operator.lexeme}',
           );
       }
@@ -55,38 +65,40 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
     if (left is bool) {
       switch (binary.operator.type) {
         case .equal:
-          return left == _expectBool(right);
+          return left == _expectBool(right, binary.operator);
         case .notEqual:
-          return left != _expectBool(right);
+          return left != _expectBool(right, binary.operator);
         default:
-          throw Exception(
+          throw RuntimeError(
+            binary.operator,
             'Unsupported operator for type: type=Bool, operator=${binary.operator.lexeme}',
           );
       }
     } else if (left is num) {
       switch (binary.operator.type) {
         case .equal:
-          return left == _expectNum(right);
+          return left == _expectNum(right, binary.operator);
         case .notEqual:
-          return left != _expectNum(right);
+          return left != _expectNum(right, binary.operator);
         case .greater:
-          return left > _expectNum(right);
+          return left > _expectNum(right, binary.operator);
         case .greaterEqual:
-          return left >= _expectNum(right);
+          return left >= _expectNum(right, binary.operator);
         case .less:
-          return left < _expectNum(right);
+          return left < _expectNum(right, binary.operator);
         case .lessEqual:
-          return left <= _expectNum(right);
+          return left <= _expectNum(right, binary.operator);
         case .plus:
-          return left + _expectNum(right);
+          return left + _expectNum(right, binary.operator);
         case .minus:
-          return left - _expectNum(right);
+          return left - _expectNum(right, binary.operator);
         case .star:
-          return left * _expectNum(right);
+          return left * _expectNum(right, binary.operator);
         case .slash:
-          return left / _expectNum(right);
+          return left / _expectNum(right, binary.operator);
         default:
-          throw Exception(
+          throw RuntimeError(
+            binary.operator,
             'Unsupported operator for type: type=${left is int ? 'Int' : 'Double'}, operator=${binary.operator.lexeme}',
           );
       }
@@ -138,17 +150,17 @@ class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<void> {
     return expression.accept(this);
   }
 
-  bool _expectBool(Object value) {
+  bool _expectBool(Object value, Token token) {
     if (value is bool) {
       return value;
     }
-    throw Exception('Expected a Bool value, but got: $value');
+    throw RuntimeError(token, 'Expected a Bool value, but got: $value');
   }
 
-  num _expectNum(Object value) {
+  num _expectNum(Object value, Token token) {
     if (value is num) {
       return value;
     }
-    throw Exception('Expected a Num value, but got: $value');
+    throw RuntimeError(token, 'Expected a Num value, but got: $value');
   }
 }

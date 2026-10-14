@@ -40,27 +40,34 @@ class RunCommand extends Command {
 
     final sw = Stopwatch()..start();
 
-    final scanner = Scanner(source, errorHandler);
-    final tokens = scanner.scanTokens();
+    try {
+      final scanner = Scanner(source, errorHandler);
+      final tokens = scanner.scanTokens();
 
-    if (errorHandler.hadError) {
-      return;
-    }
+      if (errorHandler.hadError) {
+        return;
+      }
 
-    final parser = Parser(tokens, errorHandler);
-    final statements = parser.parse();
+      final parser = Parser(tokens, errorHandler);
+      final statements = parser.parse();
 
-    if (errorHandler.hadError) {
-      return;
-    }
+      if (errorHandler.hadError) {
+        return;
+      }
 
-    final interpreter = Interpreter();
-    interpreter.interpret(statements);
+      final interpreter = Interpreter(errorHandler);
+      interpreter.interpret(statements);
+    } finally {
+      sw.stop();
 
-    sw.stop();
+      if (timeArg) {
+        stdout.writeln();
+        print('Execution time: ${sw.elapsedMicroseconds / 1000.0} ms');
+      }
 
-    if (timeArg) {
-      print('Execution time: ${sw.elapsedMicroseconds / 1000.0} ms');
+      if (errorHandler.hadError) {
+        exit(70);
+      }
     }
   }
 }
